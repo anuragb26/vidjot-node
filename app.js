@@ -8,7 +8,8 @@ app.set("view engine", "handlebars");
 const port = 5000;
 
 app.get("/", (req, res) => {
-  res.render("index");
+  const title = "Welcome";
+  res.render("index", { title });
 });
 
 app.get("/about", (req, res) => {
