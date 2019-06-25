@@ -6,7 +6,7 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 mongoose
   .connect(
-    `mongodb+srv://anuragb26:anuragb26@cluster0-nx9b3.mongodb.net/test?retryWrites=true&w=majority`,
+    `mongodb+srv://anuragb26:anuragb26@cluster0-nx9b3.mongodb.net/vidjot?retryWrites=true&w=majority`,
     { useNewUrlParser: true }
   )
   .then(() => {
@@ -14,8 +14,8 @@ mongoose
   })
   .catch(err => console.log("err", err));
 
-require("./ models/Idea");
-const Idea = mongoose.model("ideas");
+const Idea = require("./models/Idea");
+// const Idea = mongoose.model("ideas");
 
 app.engine("handlebars", exphbs());
 app.set("view engine", "handlebars");
@@ -55,7 +55,16 @@ app.post("/ideas", (req, res) => {
       details: req.body.details
     });
   } else {
-    res.send("passed");
+    const newIdea = { title: req.body.title, details: req.body.details.trim() };
+    new Idea(newIdea)
+      .save()
+      .then(idea => {
+        console.log("in then");
+        res.redirect("/ideas");
+      })
+      .catch(err => {
+        console.log("err", err);
+      });
   }
 });
 
