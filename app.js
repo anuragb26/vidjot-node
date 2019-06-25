@@ -2,6 +2,7 @@ const express = require("express");
 const exphbs = require("express-handlebars");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const methodOverride = require("method-override");
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 mongoose
@@ -23,6 +24,7 @@ app.set("view engine", "handlebars");
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(methodOverride("_method"));
 
 const port = 5000;
 
@@ -43,6 +45,13 @@ app.get("/ideas", (req, res) => {
       res.render("ideas/index", { ideas });
     });
 });
+
+app.get("/ideas/edit/:id", (req, res) => {
+  Idea.findOne({ _id: req.params.id }).then(idea => {
+    res.render("ideas/edit", { idea });
+  });
+});
+
 app.get("/ideas/add", (req, res) => {
   res.render("ideas/add");
 });
@@ -73,6 +82,16 @@ app.post("/ideas", (req, res) => {
         console.log("err", err);
       });
   }
+});
+
+app.put("/ideas/:id", (req, res) => {
+  Idea.findOne({ _id: req.params.id }).then(idea => {
+    idea.title = req.body.title;
+    idea.details = req.body.details;
+    idea.save().then(idea => {
+      res.redirect("/ideas");
+    });
+  });
 });
 
 app.listen(port, () => {
