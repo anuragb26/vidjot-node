@@ -6,6 +6,8 @@ const methodOverride = require("method-override");
 const flash = require("connect-flash");
 const session = require("express-session");
 const app = express();
+const ideas = require("./routes/ideas");
+const user = require("./routes/users");
 app.use(bodyParser.urlencoded({ extended: false }));
 mongoose
   .connect(
@@ -17,7 +19,6 @@ mongoose
   })
   .catch(err => console.log("err", err));
 
-const Idea = require("./models/Idea");
 // const Idea = mongoose.model("ideas");
 
 app.engine("handlebars", exphbs());
@@ -54,69 +55,8 @@ app.get("/about", (req, res) => {
   res.render("about", { title });
 });
 
-app.get("/ideas", (req, res) => {
-  Idea.find({})
-    .sort({ date: "desc" })
-    .then(ideas => {
-      res.render("ideas/index", { ideas });
-    });
-});
-
-app.get("/ideas/edit/:id", (req, res) => {
-  Idea.findOne({ _id: req.params.id }).then(idea => {
-    res.render("ideas/edit", { idea });
-  });
-});
-
-app.get("/ideas/add", (req, res) => {
-  res.render("ideas/add");
-});
-
-app.post("/ideas", (req, res) => {
-  let errors = [];
-  if (!req.body.title) {
-    errors.push({ text: "Please add a title" });
-  }
-  if (!req.body.details.trim()) {
-    errors.push({ text: "Please add some details" });
-  }
-  if (errors.length > 0) {
-    res.render("ideas/add", {
-      errors,
-      title: req.body.title,
-      details: req.body.details
-    });
-  } else {
-    const newIdea = { title: req.body.title, details: req.body.details.trim() };
-    new Idea(newIdea)
-      .save()
-      .then(idea => {
-        req.flash("success_msg", "Video Idea Added");
-        res.redirect("/ideas");
-      })
-      .catch(err => {
-        console.log("err", err);
-      });
-  }
-});
-
-app.put("/ideas/:id", (req, res) => {
-  Idea.findOne({ _id: req.params.id }).then(idea => {
-    idea.title = req.body.title;
-    idea.details = req.body.details;
-    idea.save().then(idea => {
-      req.flash("success_msg", "Video Idea Updated");
-      res.redirect("/ideas");
-    });
-  });
-});
-
-app.delete("/ideas/:id", (req, res) => {
-  Idea.remove({ _id: req.params.id }).then(() => {
-    req.flash("success_msg", "Video Idea removed");
-    res.redirect("/ideas");
-  });
-});
+app.use("/ideas", ideas);
+app.use("/users", user);
 
 app.listen(port, () => {
   console.log(`Server listening on ${port}`);
