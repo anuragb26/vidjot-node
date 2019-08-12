@@ -1,9 +1,10 @@
 const express = require("express");
 const Idea = require("../models/Idea");
 const router = express.Router();
+const { ensureAuthenticated } = require("../helpers/auth");
 
-router.get("/", (req, res) => {
-  Idea.find({})
+router.get("/", ensureAuthenticated, (req, res) => {
+  Idea.find({ user: req.user.id })
     .sort({ date: "desc" })
     .then(ideas => {
       res.render("ideas/index", { ideas });
@@ -12,11 +13,16 @@ router.get("/", (req, res) => {
 
 router.get("/edit/:id", (req, res) => {
   Idea.findOne({ _id: req.params.id }).then(idea => {
-    res.render("ideas/edit", { idea });
+    if (idea.user !== req.user.id) {
+      req.flash("error_msg", "Not Authorized");
+      res.redirect("/ideas");
+    } else {
+      res.render("ideas/edit", { idea });
+    }
   });
 });
 
-router.get("/add", (req, res) => {
+router.get("/add", ensureAuthenticated, (req, res) => {
   res.render("ideas/add");
 });
 
@@ -35,7 +41,11 @@ router.post("/", (req, res) => {
       details: req.body.details
     });
   } else {
-    const newIdea = { title: req.body.title, details: req.body.details.trim() };
+    const newIdea = {
+      title: req.body.title,
+      details: req.body.details.trim(),
+      user: req.user.id
+    };
     new Idea(newIdea)
       .save()
       .then(idea => {

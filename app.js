@@ -6,17 +6,14 @@ const bodyParser = require("body-parser");
 const methodOverride = require("method-override");
 const flash = require("connect-flash");
 const session = require("express-session");
-const bcrypt = require("bcryptjs");
 const passport = require("passport");
 const app = express();
 const ideas = require("./routes/ideas");
 const user = require("./routes/users");
+const { DATABASE_URI } = require("./config/database");
 app.use(bodyParser.urlencoded({ extended: false }));
 mongoose
-  .connect(
-    `mongodb+srv://anuragb26:anuragb26@cluster0-nx9b3.mongodb.net/vidjot?retryWrites=true&w=majority`,
-    { useNewUrlParser: true }
-  )
+  .connect(DATABASE_URI, { useNewUrlParser: true })
   .then(() => {
     console.log("Database connected");
   })
@@ -27,6 +24,8 @@ mongoose
 app.engine("handlebars", exphbs());
 app.set("view engine", "handlebars");
 // app.use(express.json());
+
+require("./config/passport")(passport);
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -39,6 +38,10 @@ app.use(
     saveUninitialized: true
   })
 );
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(flash());
 
 // global variables
@@ -46,9 +49,10 @@ app.use(function(req, res, next) {
   res.locals.success_msg = req.flash("success_msg");
   res.locals.error_msg = req.flash("error_msg");
   res.locals.error = req.flash("error");
+  res.locals.user = req.user || false;
   next();
 });
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 app.get("/", (req, res) => {
   const title = "Welcome";
